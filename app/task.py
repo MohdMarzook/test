@@ -11,6 +11,7 @@ import concurrent.futures
 from extract import main as extract_main
 # loading environment variables
 from dotenv import load_dotenv
+from db import update
 if os.path.exists('/etc/secrets/ENV_FILE'):
     load_dotenv('/etc/secrets/ENV_FILE')
 else:
@@ -61,8 +62,7 @@ def pdf_to_html(pdf_key):
             logger.info(f"pdf download and convertion to html in {elapsed:.2f} seconds")
         except Exception as e:
             print("Error during PDF to HTML conversion or S3 download:", e)
-            return 
-        
+            raise e
         with open(output_html, "r", encoding="utf-8") as file:
             for line in file:
                 yield line  
@@ -131,6 +131,10 @@ async def main(from_language, to_language, pdf_key):
         return s3_output_key
     
     finally:
+        if s3_output_key:
+            update("COMPLETED", pdf_key)
+        else:
+            update("ERROR", pdf_key)
         # Clean up the temporary file
         if os.path.exists(output_file):
             os.unlink(output_file)
