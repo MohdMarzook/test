@@ -18,10 +18,16 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 
+COPY ./app/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+EXPOSE 8000
+
 COPY ./app .
 
 RUN pip install -r requirements.txt
 
-CMD ["celery", "-A", "task", "worker", "--concurrency=4", "--loglevel=info", "--pool=processes"]
+CMD ["python", "web_worker.py"]
+# CMD ["celery", "-A", "task", "worker", "--concurrency=4", "--loglevel=info", "--pool=processes"]
 # CMD ["celery", "-A", "task", "worker", "--loglevel=info", "-c", "4"]
 # CMD ["python", "task.py"]

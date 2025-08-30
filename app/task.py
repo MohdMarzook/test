@@ -6,6 +6,7 @@ import os
 import boto3
 import subprocess
 import tempfile
+import ssl
 import concurrent.futures
 from extract import main as extract_main
 # loading environment variables
@@ -21,17 +22,22 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 # text translator modules
 
+REDIS_URL = "rediss://red-d2p9ssbe5dus73au8u3g:ZePk5ckWfeBsnCHejT1uRTEfyBIFmvDt@singapore-keyvalue.render.com:6379"
 
-# # app = Celery('tasks', broker=os.getenv("CELERY_BROKER_URL"), backend=os.getenv("CELERY_RESULT_BACKEND"))
-# app = Celery('tasks', broker="rediss://red-d2o8knuuk2gs73akq910:8ZGeG5EilVSZHjqcDirWV8etzrnQSJiu@singapore-keyvalue.render.com:6379/0")
-# # app.conf.broker_url = "rediss://red-d2o8knuuk2gs73akq910:8ZGeG5EilVSZHjqcDirWV8etzrnQSJiu@singapore-keyvalue.render.com:6379"
-# app = Celery('tasks')
-# app.config_from_object('celeryconfig')
+app = Celery('tasks', 
+    broker=f"{REDIS_URL}/0",  # Use database 0 for broker
+    backend=f"{REDIS_URL}/1"  # Use database 1 for results
+)
 
-# app.conf.broker_url = "rediss://red-d2o8knuuk2gs73akq910:8ZGeG5EilVSZHjqcDirWV8etzrnQSJiu@singapore-keyvalue.render.com:6379/0" 
-# app.conf.result_backend = "rediss://red-d2o8knuuk2gs73akq910:8ZGeG5EilVSZHjqcDirWV8etzrnQSJiu@singapore-keyvalue.render.com:6379/0"
-app = Celery('tasks', broker=os.getenv("RENDER_REDIS_URL", "redis://redis:6379")+"/0", backend=os.getenv("RENDER_REDIS_URL", "redis://redis:6379")+"/1")
-
+# Required SSL broker options
+app.conf.update(
+    broker_use_ssl={
+        'ssl_cert_reqs': ssl.CERT_NONE  # Disable certificate verification
+    },
+    redis_backend_use_ssl={
+        'ssl_cert_reqs': ssl.CERT_NONE  # Disable certificate verification
+    }
+)
 s3 = boto3.client(
         "s3",
         endpoint_url=os.getenv("ENDPOINT"),
