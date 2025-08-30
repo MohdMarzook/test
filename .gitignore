@@ -16,6 +16,8 @@ build/
 
 # Ignore environment files in app directory
 app/.env
+venv/
+
 
 # Ignore coverage reports
 coverage/
