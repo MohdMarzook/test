@@ -75,6 +75,8 @@ async def translate_text(text, from_language="en", to_language="ta"):
             return None
 
     async def mymemory_translator(text, from_language, to_language):
+        if from_language == "auto":
+            return None
         try:
             # Use email from environment variable for higher quota
             url = f"https://api.mymemory.translated.net/get?q={text}&langpair={from_language}|{to_language}&de={MYMEMORY_EMAIL}"
