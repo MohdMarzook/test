@@ -23,5 +23,7 @@ def update(status, pdf_id):
         cursor.close()
         connection.close()
         print("Update successful!")
+        return True
     except Exception as e:
         print(f"Failed to update: {e}")
+        return False

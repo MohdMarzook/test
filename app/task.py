@@ -88,6 +88,13 @@ def shrink_font(css_rule, scale=0.7):
 
 
 async def main(from_language, to_language, pdf_key):
+    retries = 0
+    while retries < 10:
+        if update("TRANSLATING", pdf_key):
+            retries = 0
+            break
+        time.sleep(1)
+        retries += 1
     # Create a temporary file with an HTML extension
     with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as tmp_file:
         output_file = tmp_file.name
@@ -131,10 +138,15 @@ async def main(from_language, to_language, pdf_key):
         return s3_output_key
     
     finally:
-        if s3_output_key:
-            update("COMPLETED", pdf_key)
-        else:
-            update("ERROR", pdf_key)
+        while retries < 10:
+            if s3_output_key:
+                if(update("COMPLETED", pdf_key)):
+                    break
+            else:
+                if(update("ERROR", pdf_key)):
+                    break
+            time.sleep(1)
+            retries += 1
         # Clean up the temporary file
         if os.path.exists(output_file):
             os.unlink(output_file)
